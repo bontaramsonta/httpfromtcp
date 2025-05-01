@@ -28,7 +28,7 @@ func main() {
 			log.Fatal("Error reading file:", err)
 		}
 
-		for _, char := range b {
+		for _, char := range string(b) {
 			if char == '\n' {
 				lines = append(lines, currentLine)
 				currentLine = ""
