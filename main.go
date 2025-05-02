@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"os"
+	"net"
 )
 
 func getLinesChannel(f io.ReadCloser) <-chan string {
@@ -40,16 +40,25 @@ func getLinesChannel(f io.ReadCloser) <-chan string {
 }
 
 func main() {
-	file, err := os.Open("./messages.txt")
+
+	listener, err := net.Listen("tcp", ":42069")
 	if err != nil {
-		log.Fatal("Error opening file:", err)
+		log.Fatal("Error listening:", err)
 	}
-	defer file.Close()
+	println("Listening on localhost:42069")
+	defer listener.Close()
 
-	lines := getLinesChannel(file)
+	for {
+		conn, err := listener.Accept()
+		if err != nil {
+			log.Fatal("Error accepting connection:", err)
+		}
+		defer conn.Close()
+		println("Connection accepted")
+		lines := getLinesChannel(conn)
 
-	for line := range lines {
-		fmt.Printf("read: %s\n", line)
+		for line := range lines {
+			fmt.Printf("read: %s\n", line)
+		}
 	}
-
 }
