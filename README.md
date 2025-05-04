@@ -9,19 +9,34 @@ this course requires netcat to test tcp and udp listeners. Unfortunately, the gn
 
 ### Notes:
 
-1. the docker image copies your bootdev cli config into the container (So no need to login bootdev cli inside the container). Change the source config path if neccessary
+1. the docker image copies your bootdev cli config into the container **(So no need to login bootdev cli inside the container)**. Change the source config path if neccessary
 
 2. All go files are now in src directory
 
 ## Running the project
 
-- Run the project using the following command:
+- You must have bootdev cli installed and logged in. Find the bootdev cli config file (usually in your home directory)
+
+```sh
+cat ~/.bootdev.yaml
 ```
+
+- Copy the config file to .bootdev directory
+
+```sh
+cp ~/.bootdev.yaml .bootdev.yaml
+```
+
+- Run the project using the following command:
+
+```sh
 docker-compose up -w
 ```
 This will start the project in a docker container with watch mode enabled.
+
 - Exec into the container using the following command:
-```
+
+```sh
 docker-compose exec -it go sh
 ```
 Now you can run `go run ..` commands and netcat commands.

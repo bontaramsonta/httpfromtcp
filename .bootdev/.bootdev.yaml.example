@@ -1,0 +1,11 @@
+# Rename this file to .bootdev.yaml
+# Copy your $HOME/.bootdev.yaml file contents into this file it should look something like this
+access_token: <access_token>
+api_url: https://api.boot.dev
+color:
+  gray: "8"
+  green: "2"
+  red: "1"
+frontend_url: https://boot.dev
+last_refresh: 1746207028
+refresh_token: <refresh_token>

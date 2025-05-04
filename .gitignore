@@ -2,4 +2,4 @@
 .env
 
 # boot dev login config
-.bootdev
+.bootdev/.bootdev.yaml
