@@ -1,4 +1,3 @@
-// go run ./bin/tcplistener.go
 package main
 
 import (
@@ -33,6 +32,9 @@ func getLinesChannel(f io.ReadCloser) <-chan string {
 					currentLine += string(char)
 				}
 			}
+		}
+		if currentLine != "" {
+			lines <- currentLine
 		}
 		close(lines)
 	}()
