@@ -1,46 +1,11 @@
 package main
 
 import (
-	"errors"
 	"fmt"
-	"io"
+	"httpfromtcp/internal/request"
 	"log"
 	"net"
 )
-
-func getLinesChannel(f io.ReadCloser) <-chan string {
-	lines := make(chan string)
-	currentLine := ""
-
-	// read all bytes from file: 8 bytes at a time
-	go func() {
-		for {
-			b := make([]byte, 8, 8)
-			_, err := f.Read(b)
-			if err != nil {
-				if errors.Is(err, io.EOF) {
-					break
-				}
-				log.Fatal("Error reading file:", err)
-			}
-
-			for _, char := range string(b) {
-				if char == '\n' {
-					lines <- currentLine
-					currentLine = ""
-				} else {
-					currentLine += string(char)
-				}
-			}
-		}
-		if currentLine != "" {
-			lines <- currentLine
-		}
-		close(lines)
-	}()
-
-	return lines
-}
 
 func main() {
 	println("tcplistener.go")
@@ -58,10 +23,12 @@ func main() {
 		}
 		defer conn.Close()
 		println("Connection accepted")
-		lines := getLinesChannel(conn)
-
-		for line := range lines {
-			fmt.Printf("read: %s\n", line)
-		}
+		req, _ := request.RequestFromReader(conn)
+		fmt.Printf(
+			"Request line:\n- Method: %s\n- Target: %s\n- Version: %s",
+			req.RequestLine.Method,
+			req.RequestLine.RequestTarget,
+			req.RequestLine.HttpVersion,
+		)
 	}
 }
