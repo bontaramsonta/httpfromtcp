@@ -29,6 +29,7 @@ func (h Headers) Parse(data []byte) (n int, done bool, err error) {
 		return 0, false, nil
 	}
 	for _, line := range bytes.Split(data, []byte(crlf)) {
+		println("Line:", string(line))
 		if len(line) == 0 {
 			return n + 2, true, nil
 		}
@@ -49,6 +50,7 @@ func (h *Headers) parseHeaderFromString(s string) (int, error) {
 	ErrInvalidHeader := errors.New("Invalid header")
 
 	fieldParts := strings.SplitN(s, ":", 2)
+	println("No of Parts:", fieldParts[0], len(fieldParts))
 	// not correct number of parts
 	if len(fieldParts) != 2 {
 		return 0, nil
@@ -64,8 +66,12 @@ func (h *Headers) parseHeaderFromString(s string) (int, error) {
 	}
 
 	fieldValue := strings.TrimSpace(fieldParts[1])
+	if len(fieldValue) == 0 {
+		return 0, nil
+	}
 	prevValue, ok := m[fieldName]
 	if !ok {
+		println("Setting header:", fieldName, fieldValue)
 		m.Set(fieldName, fieldValue)
 	} else {
 		newValue := strings.Join([]string{prevValue, fieldValue}, ", ")
@@ -77,6 +83,9 @@ func (h *Headers) parseHeaderFromString(s string) (int, error) {
 
 func isValidToken(s string) bool {
 	const specials = "!#$%&'*+-.^_`|~"
+	if len(s) < 1 {
+		return false
+	}
 	for _, r := range s {
 		switch {
 		case r >= 'A' && r <= 'Z':

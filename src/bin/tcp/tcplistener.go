@@ -25,10 +25,16 @@ func main() {
 		println("Connection accepted")
 		req, _ := request.RequestFromReader(conn)
 		fmt.Printf(
-			"Request line:\n- Method: %s\n- Target: %s\n- Version: %s",
+			"Request line:\n- Method: %s\n- Target: %s\n- Version: %s\n",
 			req.RequestLine.Method,
 			req.RequestLine.RequestTarget,
 			req.RequestLine.HttpVersion,
 		)
+		if len(req.Headers) > 0 {
+			fmt.Println("Headers:")
+		}
+		for k, v := range req.Headers {
+			fmt.Printf("- %s: %s\n", k, v)
+		}
 	}
 }

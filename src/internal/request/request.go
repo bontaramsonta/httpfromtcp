@@ -53,6 +53,7 @@ func RequestFromReader(reader io.Reader) (*Request, error) {
 				if req.state != requestStateDone {
 					return nil, fmt.Errorf("incomplete request, in state: %d, read n bytes on EOF: %d", req.state, numBytesRead)
 				}
+				println("Breaking on:", string(buf[readToIndex]))
 				break
 			}
 			return nil, err
