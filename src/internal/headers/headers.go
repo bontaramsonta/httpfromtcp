@@ -2,97 +2,75 @@ package headers
 
 import (
 	"bytes"
-	"errors"
+	"fmt"
 	"strings"
 )
+
+const crlf = "\r\n"
 
 type Headers map[string]string
 
 func NewHeaders() Headers {
-	return Headers{}
+	return map[string]string{}
 }
 
-func (h Headers) Get(key string) string {
-	return h[strings.ToLower(key)]
+func (h Headers) Get(key string) (string, bool) {
+	key = strings.ToLower(key)
+	v, ok := h[key]
+	return v, ok
 }
 
 func (h Headers) Set(key, value string) {
+	key = strings.ToLower(key)
+	v, ok := h[key]
+	if ok {
+		value = strings.Join([]string{
+			v,
+			value,
+		}, ", ")
+	}
 	h[key] = value
 }
 
-const crlf = "\r\n"
-
 func (h Headers) Parse(data []byte) (n int, done bool, err error) {
+	// print the data with crlf encoding
+
 	idx := bytes.Index(data, []byte(crlf))
-	// incomplete line
 	if idx == -1 {
 		return 0, false, nil
 	}
-	for _, line := range bytes.Split(data, []byte(crlf)) {
-		println("Line:", string(line))
-		if len(line) == 0 {
-			return n + 2, true, nil
-		}
-		parsed, err := h.parseHeaderFromString(string(line))
-		// error parsing header line
-		if err != nil {
-			return 0, false, err
-		}
-		n += parsed
+	if idx == 0 {
+		// the empty line
+		// headers are done, consume the CRLF
+		return 2, true, nil
 	}
-	return n + 2, false, nil
+
+	parts := bytes.SplitN(data[:idx], []byte(":"), 2)
+	key := strings.ToLower(string(parts[0]))
+
+	if key != strings.TrimRight(key, " ") {
+		return 0, false, fmt.Errorf("invalid header name: %s", key)
+	}
+
+	value := bytes.TrimSpace(parts[1])
+	key = strings.TrimSpace(key)
+	if !validTokens([]byte(key)) {
+		return 0, false, fmt.Errorf("invalid header token found: %s", key)
+	}
+	h.Set(key, string(value))
+	return idx + 2, false, nil
 }
 
-func (h *Headers) parseHeaderFromString(s string) (int, error) {
-	m := *h
-	n := len(s)
-	s = strings.TrimSpace(s)
-	ErrInvalidHeader := errors.New("Invalid header")
+var tokenChars = []byte{'!', '#', '$', '%', '&', '\'', '*', '+', '-', '.', '^', '_', '`', '|', '~'}
 
-	fieldParts := strings.SplitN(s, ":", 2)
-	println("No of Parts:", fieldParts[0], len(fieldParts))
-	// not correct number of parts
-	if len(fieldParts) != 2 {
-		return 0, nil
-	}
-
-	// for field name
-	if len(strings.Split(fieldParts[0], " ")) != 1 {
-		return 0, ErrInvalidHeader
-	}
-	fieldName := strings.ToLower(strings.TrimSpace(fieldParts[0]))
-	if !isValidToken(fieldName) {
-		return 0, ErrInvalidHeader
-	}
-
-	fieldValue := strings.TrimSpace(fieldParts[1])
-	if len(fieldValue) == 0 {
-		return 0, nil
-	}
-	prevValue, ok := m[fieldName]
-	if !ok {
-		println("Setting header:", fieldName, fieldValue)
-		m.Set(fieldName, fieldValue)
-	} else {
-		newValue := strings.Join([]string{prevValue, fieldValue}, ", ")
-		m.Set(fieldName, newValue)
-	}
-
-	return n, nil
-}
-
-func isValidToken(s string) bool {
-	const specials = "!#$%&'*+-.^_`|~"
-	if len(s) < 1 {
-		return false
-	}
-	for _, r := range s {
-		switch {
-		case r >= 'A' && r <= 'Z':
-		case r >= 'a' && r <= 'z':
-		case r >= '0' && r <= '9':
-		case strings.ContainsRune(specials, r):
-		default:
+// validTokens checks if the data contains only valid tokens
+// or characters that are allowed in a token
+func validTokens(data []byte) bool {
+	for _, c := range data {
+		if !(c >= 'A' && c <= 'Z' ||
+			c >= 'a' && c <= 'z' ||
+			c >= '0' && c <= '9' ||
+			c == '-') {
 			return false
 		}
 	}
